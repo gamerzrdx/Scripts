@@ -1,0 +1,39 @@
+#!/bin/bash
+# UnixFetch Installer Script
+# This script installs UnixFetch so you can run it with the command 'unixfetch'
+
+# Variables
+INSTALL_DIR="/usr/local/bin"
+SCRIPT_NAME="unixfetch"
+
+# Create the main script
+cat << 'EOF' > /tmp/$SCRIPT_NAME
+#!/bin/bash
+clear
+echo "========================================"
+echo " _    _ _   _ ___  __  __ "
+echo "| |  | | \ | |_ _| \ \/ / "
+echo "| |  | |  \| || |   \  /  "
+echo "| |__| | |\  || |   /  \  "
+echo " \____/|_| \_|___| /_/\_\ "
+echo "========================================"
+echo "Unix Cloud Fetch Utility"
+echo "----------------------------------------"
+echo "Hostname: $(hostname)"
+echo "OS: $(uname -o)"
+echo "Kernel: $(uname -r)"
+echo "Uptime: $(uptime -p)"
+echo "CPU: $(grep 'model name' /proc/cpuinfo | head -n 1 | cut -d':' -f2)"
+echo "Memory: $(free -h | awk '/Mem/ {print $3 \" / \" $2}')"
+echo "IP Address: $(hostname -I | awk '{print $1}')"
+echo "----------------------------------------"
+echo "© $(date +%Y) Unix Cloud"
+EOF
+
+# Make script executable
+chmod +x /tmp/$SCRIPT_NAME
+
+# Move to installation directory
+sudo mv /tmp/$SCRIPT_NAME $INSTALL_DIR/
+
+echo "✅ Installed! Now you can run: unixfetch"
