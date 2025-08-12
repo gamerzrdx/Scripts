@@ -5,15 +5,18 @@ echo -e "\n\033[1;36m"
 cat << "EOF"
 
 
-  _____        _____            
- |  __ \ /\   |  __ \     /\    
- | |__) /  \  | |__) |   /  \   
- |  ___/ /\ \ |  _  /   / /\ \  
- | |  / ____ \| | \ \  / ____ \ 
- |_| /_/    \_\_|  \_\/_/    \_\
+
+  _____  _______   __
+ |  __ \|  __ \ \ / /
+ | |__) | |  | \ V / 
+ |  _  /| |  | |> <  
+ | | \ \| |__| / . \ 
+ |_|  \_\_____/_/ \_\
+                     
+
                                 
-                                
- 🤍 Ubuntu Installer In Github - github.com/ParaNoob123
+                              
+ 🤍 Ubuntu Installer In Github - github.com/Rdx
 
 EOF
 echo -e "\033[0m"
@@ -41,7 +44,7 @@ done
 
 # Completion Message
 echo -e "\n\033[1;32m-------------------------------------\033[0m"
-echo -e "\033[1;32m Credit Also Goes to HopingBoyz Note Script Made By Para 🎉\033[0m"
+echo -e "\033[1;32m Credit Also Goes to HopingBoyz Note Script Made By Rdx 🎉\033[0m"
 echo -e "\033[1;35m           User:root pass:root Made By Para\033[0m"
 echo -e "\033[1;35m       github.com/Para\033[0m"
 echo -e "\033[1;32m-------------------------------------\033[0m"
