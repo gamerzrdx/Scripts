@@ -1,39 +1,44 @@
 #!/bin/bash
-# UnixFetch Installer Script
-# This script installs UnixFetch so you can run it with the command 'unixfetch'
 
-# Variables
-INSTALL_DIR="/usr/local/bin"
-SCRIPT_NAME="unixfetch"
+# Colors
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+YELLOW="\033[1;33m"
+BLUE="\033[1;34m"
+MAGENTA="\033[1;35m"
+CYAN="\033[1;36m"
+WHITE="\033[1;37m"
+RESET="\033[0m"
 
-# Create the main script
-cat << 'EOF' > /tmp/$SCRIPT_NAME
-#!/bin/bash
-clear
-echo "========================================"
-echo " _    _ _   _ ___  __  __ "
-echo "| |  | | \ | |_ _| \ \/ / "
-echo "| |  | |  \| || |   \  /  "
-echo "| |__| | |\  || |   /  \  "
-echo " \____/|_| \_|___| /_/\_\ "
-echo "========================================"
-echo "Unix Cloud Fetch Utility"
-echo "----------------------------------------"
-echo "Hostname: $(hostname)"
-echo "OS: $(uname -o)"
-echo "Kernel: $(uname -r)"
-echo "Uptime: $(uptime -p)"
-echo "CPU: $(grep 'model name' /proc/cpuinfo | head -n 1 | cut -d':' -f2)"
-echo "Memory: $(free -h | awk '/Mem/ {print $3 \" / \" $2}')"
-echo "IP Address: $(hostname -I | awk '{print $1}')"
-echo "----------------------------------------"
-echo "© $(date +%Y) Unix Cloud"
-EOF
+# ASCII Logo
+echo -e "${RED}"
+echo "      _    _   _ _  __"
+echo "     | |  | | | | |/ /"
+echo "     | |  | | | | ' / "
+echo "     | |__| |_| | . \ "
+echo "      \____\___/|_|\_\ "
+echo -e "${YELLOW}         UNIX FETCH${RESET}"
+echo
 
-# Make script executable
-chmod +x /tmp/$SCRIPT_NAME
+# System Info
+HOSTNAME=$(hostname)
+OS=$(grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"')
+KERNEL=$(uname -r)
+UPTIME=$(uptime -p)
+SHELL_NAME=$(basename "$SHELL")
+CPU=$(lscpu | grep "Model name" | sed 's/Model name: *//')
+MEMORY=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
+DISK=$(df -h --total | grep total | awk '{print $3 "/" $2}')
+IP=$(hostname -I | awk '{print $1}')
 
-# Move to installation directory
-sudo mv /tmp/$SCRIPT_NAME $INSTALL_DIR/
-
-echo "✅ Installed! Now you can run: unixfetch"
+# Display Info with colors
+echo -e "${GREEN}OS        ${WHITE}: ${CYAN}$OS"
+echo -e "${GREEN}Host      ${WHITE}: ${CYAN}$HOSTNAME"
+echo -e "${GREEN}Kernel    ${WHITE}: ${CYAN}$KERNEL"
+echo -e "${GREEN}Uptime    ${WHITE}: ${CYAN}$UPTIME"
+echo -e "${GREEN}Shell     ${WHITE}: ${CYAN}$SHELL_NAME"
+echo -e "${GREEN}CPU       ${WHITE}: ${CYAN}$CPU"
+echo -e "${GREEN}Memory    ${WHITE}: ${CYAN}$MEMORY"
+echo -e "${GREEN}Disk      ${WHITE}: ${CYAN}$DISK"
+echo -e "${GREEN}IP Addr   ${WHITE}: ${CYAN}$IP"
+echo -e "${RESET}"
