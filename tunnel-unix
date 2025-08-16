@@ -1,0 +1,47 @@
+#!/bin/bash
+# UNIX Nodes Random SSH Port Installer
+# By Rohit (Inkbyte Studios)
+
+# Update & install
+apt update -y && apt install -y openssh-server ufw
+
+# Generate random port between 25000–25999
+PORT=$(( ( RANDOM % 1000 )  + 25000 ))
+
+# Create user
+USER="unixuser"
+PASS="changeme"
+if ! id "$USER" &>/dev/null; then
+  adduser --disabled-password --gecos "" $USER
+  echo "$USER:$PASS" | chpasswd
+  usermod -aG sudo $USER
+fi
+
+# Update sshd_config
+SSHD="/etc/ssh/sshd_config"
+cp $SSHD ${SSHD}.bak.$(date +%s)
+
+# Remove old Port lines
+sed -i '/^Port /d' $SSHD
+echo "Port $PORT" >> $SSHD
+sed -i 's/^PermitRootLogin.*/PermitRootLogin no/' $SSHD
+sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication yes/' $SSHD
+
+# Restart SSH
+systemctl restart ssh
+
+# Firewall
+ufw allow $PORT/tcp
+ufw --force enable
+
+# Show info
+IP=$(hostname -I | awk '{print $1}')
+echo "--------------------------------"
+echo "SSH setup complete!"
+echo "Server: vps.unixnodes.fun"
+echo "IP: $IP"
+echo "Port: $PORT"
+echo "User: $USER"
+echo "Pass: $PASS (please change!)"
+echo "--------------------------------"
+echo "Login: ssh $USER@$IP -p $PORT"
