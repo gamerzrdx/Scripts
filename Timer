@@ -1,0 +1,51 @@
+import discord
+from discord.ext import commands, tasks
+from discord import app_commands
+import asyncio
+
+intents = discord.Intents.default()
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+# Timer command
+@bot.tree.command(name="timer", description="Start a 12-hour payout timer")
+async def timer(interaction: discord.Interaction):
+    total_time = 12 * 60 * 60  # 12 hours in seconds
+    message = await interaction.response.send_message(
+        embed=discord.Embed(
+            title="⏳ VPS Payout Timer",
+            description="Timer started for **12 hours**.",
+            color=discord.Color.blue()
+        )
+    )
+
+    # Get the actual message object
+    sent_message = await interaction.original_response()
+
+    for remaining in range(total_time, 0, -3600):  # updates every hour
+        hours = remaining // 3600
+        embed = discord.Embed(
+            title="⏳ VPS Payout Timer",
+            description=f"Time left: **{hours} hours**",
+            color=discord.Color.green()
+        )
+        await sent_message.edit(embed=embed)
+        await asyncio.sleep(3600)  # wait 1 hour
+
+    # Final embed after 12h
+    final_embed = discord.Embed(
+        title="✅ Timer Finished",
+        description="12 hours are over! VPS payout ready.",
+        color=discord.Color.gold()
+    )
+    await sent_message.edit(embed=final_embed)
+
+@bot.event
+async def on_ready():
+    print(f"✅ Logged in as {bot.user}")
+    try:
+        synced = await bot.tree.sync()
+        print(f"Synced {len(synced)} commands")
+    except Exception as e:
+        print(f"Error syncing commands: {e}")
+
+bot.run("YOUR_BOT_TOKEN")
