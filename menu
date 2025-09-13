@@ -1,0 +1,162 @@
+#!/bin/bash
+
+# =========================
+# RDX Advanced Server Manager (Clean Version)
+# =========================
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+# Title
+clear
+echo -e "${CYAN}==========================================="
+echo "      RDX Advanced Game Server Manager"
+echo "===========================================${NC}"
+
+# --------- Helper Functions ---------
+install_blueprint () {
+    local url=$1
+    echo -e "${GREEN}Installing Blueprint from: $url${NC}"
+    cd /var/www/pterodactyl || { echo -e "${RED}Pterodactyl not found!${NC}"; return; }
+    mkdir -p blueprints && cd blueprints
+    curl -L -o blueprint.zip "$url"
+    unzip -o blueprint.zip -d /var/www/pterodactyl
+    cd /var/www/pterodactyl
+    php artisan migrate --force
+    chown -R www-data:www-data /var/www/pterodactyl
+    echo -e "${CYAN}✅ Blueprint installed successfully!${NC}"
+}
+
+# --------- Menus ---------
+main_menu() {
+while true; do
+    echo -e "\n${YELLOW}=== Main Menu ===${NC}"
+    echo "1) Pterodactyl Manager"
+    echo "2) Security & Network"
+    echo "3) Monitoring Tools"
+    echo "4) Docker & Virtualization"
+    echo "5) System Maintenance"
+    echo "0) Exit"
+    read -p "Enter choice: " main_choice
+    case $main_choice in
+        1) ptero_menu ;;
+        2) security_menu ;;
+        3) monitoring_menu ;;
+        4) docker_menu ;;
+        5) system_menu ;;
+        0) echo -e "${RED}Exiting RDX Manager...${NC}"; exit 0 ;;
+        *) echo -e "${RED}Invalid option!${NC}" ;;
+    esac
+done
+}
+
+# --------- Submenus ---------
+ptero_menu() {
+while true; do
+    echo -e "\n${YELLOW}=== Pterodactyl Manager ===${NC}"
+    echo "1) Install Panel"
+    echo "2) Install Wings"
+    echo "3) Update Panel/Wings"
+    echo "4) Uninstall Panel"
+    echo "5) Install Blueprints (Custom URL)"
+    echo "0) Back"
+    read -p "Choice: " ptero_choice
+    case $ptero_choice in
+        1) bash <(curl -s https://pterodactyl-installer.se) ;;
+        2) bash <(curl -s https://pterodactyl-installer.se/wings.sh) ;;
+        3) bash <(curl -s https://pterodactyl-installer.se/update.sh) ;;
+        4) bash <(curl -s https://pterodactyl-installer.se/uninstall.sh) ;;
+        5) read -p "Enter Blueprint URL: " burl; install_blueprint "$burl" ;;
+        0) break ;;
+        *) echo -e "${RED}Invalid option!${NC}" ;;
+    esac
+done
+}
+
+security_menu() {
+while true; do
+    echo -e "\n${YELLOW}=== Security & Network ===${NC}"
+    echo "1) Install Fail2Ban"
+    echo "2) Install UFW Firewall"
+    echo "0) Back"
+    read -p "Choice: " sec_choice
+    case $sec_choice in
+        1) apt install -y fail2ban && systemctl enable --now fail2ban ;;
+        2) apt install -y ufw && ufw enable ;;
+        0) break ;;
+        *) echo -e "${RED}Invalid option!${NC}" ;;
+    esac
+done
+}
+
+monitoring_menu() {
+while true; do
+    echo -e "\n${YELLOW}=== Monitoring Tools ===${NC}"
+    echo "1) Install HTOP"
+    echo "2) Install Netdata"
+    echo "3) Install Glances"
+    echo "4) Check System Info (Neofetch)"
+    echo "5) View Server Logs"
+    echo "0) Back"
+    read -p "Choice: " mon_choice
+    case $mon_choice in
+        1) apt install -y htop ;;
+        2) bash <(curl -Ss https://my-netdata.io/kickstart.sh) ;;
+        3) apt install -y glances ;;
+        4) apt install -y neofetch && neofetch ;;
+        5) journalctl -xe ;;
+        0) break ;;
+        *) echo -e "${RED}Invalid option!${NC}" ;;
+    esac
+done
+}
+
+docker_menu() {
+while true; do
+    echo -e "\n${YELLOW}=== Docker & Virtualization ===${NC}"
+    echo "1) Install Docker"
+    echo "2) Install Portainer"
+    echo "3) Install PufferPanel"
+    echo "4) Install RDP (Ubuntu Desktop via Docker)"
+    echo "0) Back"
+    read -p "Choice: " docker_choice
+    case $docker_choice in
+        1) apt install -y docker.io && systemctl enable --now docker ;;
+        2) docker volume create portainer_data
+           docker run -d -p 9000:9000 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce ;;
+        3) curl -s https://packagecloud.io/install/repositories/pufferpanel/pufferpanel/script.deb.sh | bash
+           apt-get install -y pufferpanel
+           systemctl enable --now pufferpanel ;;
+        4) read -p "Enter container name: " cname
+           docker run -d --platform=linux/amd64 -p 6080:6080 --name "$cname" root/docker-ubuntu-desktop
+           echo -e "${CYAN}RDP started at http://YOUR_SERVER_IP:6080${NC}" ;;
+        0) break ;;
+        *) echo -e "${RED}Invalid option!${NC}" ;;
+    esac
+done
+}
+
+system_menu() {
+while true; do
+    echo -e "\n${YELLOW}=== System Maintenance ===${NC}"
+    echo "1) Clean System (autoremove/cache)"
+    echo "2) Reboot Server"
+    echo "3) Update & Upgrade Server"
+    echo "0) Back"
+    read -p "Choice: " sys_choice
+    case $sys_choice in
+        1) apt autoremove -y && apt clean ;;
+        2) reboot ;;
+        3) apt update && apt upgrade -y ;;
+        0) break ;;
+        *) echo -e "${RED}Invalid option!${NC}" ;;
+    esac
+done
+}
+
+# --------- Run Main Menu ---------
+main_menu
