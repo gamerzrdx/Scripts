@@ -1,5 +1,5 @@
 #!/bin/bash
-# Convoy Panel Manager by Rohit (TECH RDX)
+# Convoy Panel Manager - Final Version by Rohit (TECH RDX)
 
 CYAN="\033[0;36m"
 GREEN="\033[0;32m"
@@ -12,30 +12,29 @@ convoy_dir="/var/www/convoy"
 banner() {
 clear
 echo -e "${CYAN}"
-echo "   ██████╗ ██████╗ ███╗   ██╗██╗   ██╗ ██████╗ ██╗   ██╗"
-echo "  ██╔═══██╗██╔══██╗████╗  ██║██║   ██║██╔═══██╗██║   ██║"
-echo "  ██║   ██║██████╔╝██╔██╗ ██║██║   ██║██║   ██║██║   ██║"
-echo "  ██║   ██║██╔═══╝ ██║╚██╗██║██║   ██║██║   ██║██║   ██║"
-echo "  ╚██████╔╝██║     ██║ ╚████║╚██████╔╝╚██████╔╝╚██████╔╝"
-echo "   ╚═════╝ ╚═╝     ╚═╝  ╚═══╝ ╚═════╝  ╚═════╝  ╚═════╝ "
+echo "╔══════════════════════════════════════╗"
+echo "║      🚀 TECH RDX - CONVOY PANEL      ║"
+echo "╚══════════════════════════════════════╝"
+echo "        Powered by Inkbyte Studios     "
 echo -e "${NC}"
-sleep 1
 }
 
 loading() {
-  echo -ne "${YELLOW}Loading Convoy Panel Manager "
-  for i in {1..10}; do
-    echo -ne "▓"
+  echo -ne "${YELLOW}Starting Installer "
+  spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+  for i in {1..20}; do
+    i=$((i % 10))
+    printf "\b${spin:$i:1}"
     sleep 0.15
   done
-  echo -e " ${GREEN}Done!${NC}"
+  echo -e " ${GREEN}Ready!${NC}"
   sleep 1
 }
 
 menu() {
   clear
   echo -e "${CYAN}======================================="
-  echo "        Convoy Panel Installer"
+  echo "         Convoy Panel Manager"
   echo -e "=======================================${NC}"
   echo -e "${YELLOW}1) Install Convoy Panel${NC}"
   echo -e "${YELLOW}2) Uninstall Convoy Panel${NC}"
@@ -57,7 +56,7 @@ install_panel() {
 
   mkdir -p $convoy_dir && cd $convoy_dir || exit
   curl -Lo panel.tar.gz https://github.com/convoypanel/panel/releases/latest/download/panel.tar.gz
-  tar -xzf panel.tar.gz && rm panel.tar.gz
+  tar -xzf panel.tar.gz && rm -f panel.tar.gz
 
   chmod -R o+w storage/ bootstrap/cache/
   [ ! -f ".env" ] && cp .env.example .env
@@ -65,7 +64,7 @@ install_panel() {
   echo -e "${CYAN}✔ Convoy installed.${NC}"
   echo -e "${YELLOW}Next steps:${NC}"
   echo "   cd $convoy_dir"
-  echo "   nano .env   (edit database & panel settings)"
+  echo "   nano .env   (edit DB & settings)"
   echo "   docker compose up -d"
   echo "   docker compose exec workspace composer install --no-dev --optimize-autoloader"
   echo "   docker compose exec workspace php artisan key:generate --force"
@@ -91,7 +90,8 @@ update_panel() {
   if [ -d "$convoy_dir" ]; then
     cd $convoy_dir || exit
     curl -Lo panel.tar.gz https://github.com/convoypanel/panel/releases/latest/download/panel.tar.gz
-    tar -xzf panel.tar.gz --overwrite && rm panel.tar.gz
+    tar --overwrite -xzf panel.tar.gz || tar -xzf panel.tar.gz
+    rm -f panel.tar.gz
     docker compose down && docker compose up -d --build
     echo -e "${GREEN}✔ Update complete.${NC}"
   else
@@ -123,7 +123,7 @@ status_panel() {
   [ -d "$convoy_dir" ] && docker ps || echo -e "${RED}Convoy not installed.${NC}"
 }
 
-# Run installer
+# Run
 banner
 loading
 while true; do
