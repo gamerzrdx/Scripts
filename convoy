@@ -1,5 +1,5 @@
 #!/bin/bash
-# Convoy Panel Menu Installer with Animation by Rohit (TECH RDX)
+# Convoy Panel Manager by Rohit (TECH RDX)
 
 CYAN="\033[0;36m"
 GREEN="\033[0;32m"
@@ -20,14 +20,13 @@ echo "  ╚██████╔╝██║     ██║ ╚████║╚
 echo "   ╚═════╝ ╚═╝     ╚═╝  ╚═══╝ ╚═════╝  ╚═════╝  ╚═════╝ "
 echo -e "${NC}"
 sleep 1
-loading_animation
 }
 
-loading_animation() {
+loading() {
   echo -ne "${YELLOW}Loading Convoy Panel Manager "
   for i in {1..10}; do
     echo -ne "▓"
-    sleep 0.2
+    sleep 0.15
   done
   echo -e " ${GREEN}Done!${NC}"
   sleep 1
@@ -52,15 +51,21 @@ menu() {
 
 install_panel() {
   echo -e "${GREEN}Installing Convoy Panel...${NC}"
-  apt update && apt upgrade -y
+  apt update -y && apt upgrade -y
   curl -fsSL https://get.docker.com/ | sh
-  apt install -y docker-compose curl unzip git nano
-  mkdir -p $convoy_dir && cd $convoy_dir
+  apt install -y docker-compose-plugin curl unzip git nano
+
+  mkdir -p $convoy_dir && cd $convoy_dir || exit
   curl -Lo panel.tar.gz https://github.com/convoypanel/panel/releases/latest/download/panel.tar.gz
-  tar -xzvf panel.tar.gz >/dev/null 2>&1 && rm panel.tar.gz
+  tar -xzf panel.tar.gz && rm panel.tar.gz
+
   chmod -R o+w storage/ bootstrap/cache/
-  cp .env.example .env
-  echo -e "${CYAN}Convoy files installed. Edit .env then run:${NC}"
+  [ ! -f ".env" ] && cp .env.example .env
+
+  echo -e "${CYAN}✔ Convoy installed.${NC}"
+  echo -e "${YELLOW}Next steps:${NC}"
+  echo "   cd $convoy_dir"
+  echo "   nano .env   (edit database & panel settings)"
   echo "   docker compose up -d"
   echo "   docker compose exec workspace composer install --no-dev --optimize-autoloader"
   echo "   docker compose exec workspace php artisan key:generate --force"
@@ -70,47 +75,57 @@ install_panel() {
 
 uninstall_panel() {
   echo -e "${RED}Uninstalling Convoy Panel...${NC}"
-  cd $convoy_dir || exit
-  docker compose down
-  cd ..
-  rm -rf $convoy_dir
-  echo -e "${GREEN}Convoy Panel removed.${NC}"
+  if [ -d "$convoy_dir" ]; then
+    cd $convoy_dir || exit
+    docker compose down || true
+    cd ..
+    rm -rf $convoy_dir
+    echo -e "${GREEN}✔ Convoy Panel removed.${NC}"
+  else
+    echo -e "${RED}Convoy not installed.${NC}"
+  fi
 }
 
 update_panel() {
   echo -e "${YELLOW}Updating Convoy Panel...${NC}"
-  cd $convoy_dir || exit
-  curl -Lo panel.tar.gz https://github.com/convoypanel/panel/releases/latest/download/panel.tar.gz
-  tar -xzvf panel.tar.gz --overwrite >/dev/null 2>&1 && rm panel.tar.gz
-  docker compose down && docker compose up -d --build
-  echo -e "${GREEN}Update complete.${NC}"
+  if [ -d "$convoy_dir" ]; then
+    cd $convoy_dir || exit
+    curl -Lo panel.tar.gz https://github.com/convoypanel/panel/releases/latest/download/panel.tar.gz
+    tar -xzf panel.tar.gz --overwrite && rm panel.tar.gz
+    docker compose down && docker compose up -d --build
+    echo -e "${GREEN}✔ Update complete.${NC}"
+  else
+    echo -e "${RED}Convoy not installed.${NC}"
+  fi
 }
 
 backup_panel() {
   echo -e "${CYAN}Creating backup...${NC}"
-  tar -czvf convoy-backup-$(date +%F).tar.gz $convoy_dir >/dev/null 2>&1
-  echo -e "${GREEN}Backup saved as convoy-backup-$(date +%F).tar.gz${NC}"
+  if [ -d "$convoy_dir" ]; then
+    tar -czf convoy-backup-$(date +%F).tar.gz $convoy_dir
+    echo -e "${GREEN}✔ Backup saved as convoy-backup-$(date +%F).tar.gz${NC}"
+  else
+    echo -e "${RED}Convoy not installed.${NC}"
+  fi
 }
 
 start_panel() {
-  cd $convoy_dir || exit
-  docker compose up -d
-  echo -e "${GREEN}Convoy Panel started.${NC}"
+  [ -d "$convoy_dir" ] && cd $convoy_dir && docker compose up -d && \
+  echo -e "${GREEN}✔ Convoy Panel started.${NC}" || echo -e "${RED}Not installed.${NC}"
 }
 
 stop_panel() {
-  cd $convoy_dir || exit
-  docker compose down
-  echo -e "${RED}Convoy Panel stopped.${NC}"
+  [ -d "$convoy_dir" ] && cd $convoy_dir && docker compose down && \
+  echo -e "${RED}✔ Convoy Panel stopped.${NC}" || echo -e "${RED}Not installed.${NC}"
 }
 
 status_panel() {
-  cd $convoy_dir || exit
-  docker ps
+  [ -d "$convoy_dir" ] && docker ps || echo -e "${RED}Convoy not installed.${NC}"
 }
 
-# Run
+# Run installer
 banner
+loading
 while true; do
   menu
   case $choice in
