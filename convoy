@@ -1,74 +1,127 @@
 #!/bin/bash
-# ============================================
-#   Convoy Panel Auto Installer
-#   Made with ❤️ by Inkbyte Studios
-#   Works on: Ubuntu 20.04/22.04, Debian 11/12
-# ============================================
+# Convoy Panel Menu Installer with Animation by Rohit (TECH RDX)
 
-set -e
-
-# Colors
-RED="\033[0;31m"
-GREEN="\033[0;32m"
 CYAN="\033[0;36m"
+GREEN="\033[0;32m"
 YELLOW="\033[1;33m"
-NC="\033[0m" # No Color
+RED="\033[1;31m"
+NC="\033[0m"
 
+convoy_dir="/var/www/convoy"
+
+banner() {
 clear
 echo -e "${CYAN}"
-echo "======================================="
-echo "        Convoy Panel Installer"
-echo "======================================="
+echo "   ██████╗ ██████╗ ███╗   ██╗██╗   ██╗ ██████╗ ██╗   ██╗"
+echo "  ██╔═══██╗██╔══██╗████╗  ██║██║   ██║██╔═══██╗██║   ██║"
+echo "  ██║   ██║██████╔╝██╔██╗ ██║██║   ██║██║   ██║██║   ██║"
+echo "  ██║   ██║██╔═══╝ ██║╚██╗██║██║   ██║██║   ██║██║   ██║"
+echo "  ╚██████╔╝██║     ██║ ╚████║╚██████╔╝╚██████╔╝╚██████╔╝"
+echo "   ╚═════╝ ╚═╝     ╚═╝  ╚═══╝ ╚═════╝  ╚═════╝  ╚═════╝ "
 echo -e "${NC}"
+sleep 1
+loading_animation
+}
 
-# Update system
-echo -e "${YELLOW}[1/7] Updating system...${NC}"
-apt update && apt upgrade -y
+loading_animation() {
+  echo -ne "${YELLOW}Loading Convoy Panel Manager "
+  for i in {1..10}; do
+    echo -ne "▓"
+    sleep 0.2
+  done
+  echo -e " ${GREEN}Done!${NC}"
+  sleep 1
+}
 
-# Install Docker
-echo -e "${YELLOW}[2/7] Installing Docker...${NC}"
-curl -fsSL https://get.docker.com/ | sh
+menu() {
+  clear
+  echo -e "${CYAN}======================================="
+  echo "        Convoy Panel Installer"
+  echo -e "=======================================${NC}"
+  echo -e "${YELLOW}1) Install Convoy Panel${NC}"
+  echo -e "${YELLOW}2) Uninstall Convoy Panel${NC}"
+  echo -e "${YELLOW}3) Update Convoy Panel${NC}"
+  echo -e "${YELLOW}4) Backup Convoy Panel${NC}"
+  echo -e "${YELLOW}5) Start Panel${NC}"
+  echo -e "${YELLOW}6) Stop Panel${NC}"
+  echo -e "${YELLOW}7) Check Status${NC}"
+  echo -e "${YELLOW}8) Exit${NC}"
+  echo
+  read -p "Choose an option [1-8]: " choice
+}
 
-# Install dependencies
-echo -e "${YELLOW}[3/7] Installing dependencies...${NC}"
-apt install -y docker-compose curl unzip git nano
+install_panel() {
+  echo -e "${GREEN}Installing Convoy Panel...${NC}"
+  apt update && apt upgrade -y
+  curl -fsSL https://get.docker.com/ | sh
+  apt install -y docker-compose curl unzip git nano
+  mkdir -p $convoy_dir && cd $convoy_dir
+  curl -Lo panel.tar.gz https://github.com/convoypanel/panel/releases/latest/download/panel.tar.gz
+  tar -xzvf panel.tar.gz >/dev/null 2>&1 && rm panel.tar.gz
+  chmod -R o+w storage/ bootstrap/cache/
+  cp .env.example .env
+  echo -e "${CYAN}Convoy files installed. Edit .env then run:${NC}"
+  echo "   docker compose up -d"
+  echo "   docker compose exec workspace composer install --no-dev --optimize-autoloader"
+  echo "   docker compose exec workspace php artisan key:generate --force"
+  echo "   docker compose exec workspace php artisan migrate --force"
+  echo "   docker compose exec workspace php artisan c:user:make"
+}
 
-# Setup directory
-echo -e "${YELLOW}[4/7] Setting up Convoy directory...${NC}"
-mkdir -p /var/www/convoy
-cd /var/www/convoy
+uninstall_panel() {
+  echo -e "${RED}Uninstalling Convoy Panel...${NC}"
+  cd $convoy_dir || exit
+  docker compose down
+  cd ..
+  rm -rf $convoy_dir
+  echo -e "${GREEN}Convoy Panel removed.${NC}"
+}
 
-# Download Convoy
-echo -e "${YELLOW}[5/7] Downloading Convoy Panel...${NC}"
-curl -Lo panel.tar.gz https://github.com/convoypanel/panel/releases/latest/download/panel.tar.gz
-tar -xzvf panel.tar.gz >/dev/null 2>&1
-rm panel.tar.gz
+update_panel() {
+  echo -e "${YELLOW}Updating Convoy Panel...${NC}"
+  cd $convoy_dir || exit
+  curl -Lo panel.tar.gz https://github.com/convoypanel/panel/releases/latest/download/panel.tar.gz
+  tar -xzvf panel.tar.gz --overwrite >/dev/null 2>&1 && rm panel.tar.gz
+  docker compose down && docker compose up -d --build
+  echo -e "${GREEN}Update complete.${NC}"
+}
 
-# Permissions
-echo -e "${YELLOW}[6/7] Fixing permissions...${NC}"
-chmod -R o+w storage/ bootstrap/cache/
+backup_panel() {
+  echo -e "${CYAN}Creating backup...${NC}"
+  tar -czvf convoy-backup-$(date +%F).tar.gz $convoy_dir >/dev/null 2>&1
+  echo -e "${GREEN}Backup saved as convoy-backup-$(date +%F).tar.gz${NC}"
+}
 
-# Environment file
-cp .env.example .env
+start_panel() {
+  cd $convoy_dir || exit
+  docker compose up -d
+  echo -e "${GREEN}Convoy Panel started.${NC}"
+}
 
-echo -e "${GREEN}"
-echo "======================================="
-echo " Convoy Panel has been downloaded!"
-echo "======================================="
-echo -e "${NC}"
+stop_panel() {
+  cd $convoy_dir || exit
+  docker compose down
+  echo -e "${RED}Convoy Panel stopped.${NC}"
+}
 
-echo -e "${CYAN}Next Steps:${NC}"
-echo "  1. Edit your .env file:"
-echo "     nano /var/www/convoy/.env"
-echo ""
-echo "  2. Start Convoy services:"
-echo "     docker compose up -d"
-echo ""
-echo "  3. Run initial setup:"
-echo "     docker compose exec workspace composer install --no-dev --optimize-autoloader"
-echo "     docker compose exec workspace php artisan key:generate --force"
-echo "     docker compose exec workspace php artisan migrate --force"
-echo "     docker compose exec workspace php artisan optimize"
-echo "     docker compose exec workspace php artisan c:user:make"
-echo ""
-echo -e "${GREEN}Installation complete! 🚀${NC}"
+status_panel() {
+  cd $convoy_dir || exit
+  docker ps
+}
+
+# Run
+banner
+while true; do
+  menu
+  case $choice in
+    1) install_panel ;;
+    2) uninstall_panel ;;
+    3) update_panel ;;
+    4) backup_panel ;;
+    5) start_panel ;;
+    6) stop_panel ;;
+    7) status_panel ;;
+    8) echo -e "${RED}Exiting...${NC}"; exit 0 ;;
+    *) echo -e "${RED}Invalid option!${NC}"; sleep 2 ;;
+  esac
+done
