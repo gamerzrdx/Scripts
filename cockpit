@@ -1,25 +1,64 @@
 #!/bin/bash
 # Cockpit + Virtualization Installer Script (Ubuntu/Debian)
+# With Colors and Animation
 
 set -e
 
-echo "🚀 Updating system..."
-sudo apt update && sudo apt upgrade -y
+# Colors
+GREEN="\e[32m"
+YELLOW="\e[33m"
+RED="\e[31m"
+RESET="\e[0m"
 
-echo "📦 Installing Cockpit..."
-sudo apt install -y cockpit
-sudo systemctl enable --now cockpit.socket
+# Spinner animation
+spinner() {
+    local pid=$1
+    local delay=0.15
+    local spinstr='|/-\'
+    while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+        local temp=${spinstr#?}
+        printf " [%c]  " "$spinstr"
+        spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+        printf "\b\b\b\b\b\b"
+    done
+}
 
-echo "📦 Installing Virtualization packages..."
-sudo apt install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager
-sudo systemctl enable --now libvirtd
+# Run command with spinner
+run_cmd() {
+    echo -ne "${YELLOW}$1...${RESET}"
+    bash -c "$2" &>/dev/null &
+    pid=$!
+    spinner $pid
+    wait $pid
+    if [ $? -eq 0 ]; then
+        echo -e " ${GREEN}Done!${RESET}"
+    else
+        echo -e " ${RED}Failed!${RESET}"
+        exit 1
+    fi
+}
 
-echo "📦 Adding Cockpit Virtual Machines plugin..."
-sudo apt install -y cockpit-machines
+clear
+echo -e "${GREEN}"
+echo "==========================================="
+echo "   🚀 Cockpit + Virtualization Installer   "
+echo "==========================================="
+echo -e "${RESET}"
 
-echo "👤 Adding current user to virtualization groups..."
-sudo usermod -aG libvirt,kvm $USER
+run_cmd "Updating system" "sudo apt update && sudo apt upgrade -y"
+run_cmd "Installing Cockpit" "sudo apt install -y cockpit"
+run_cmd "Enabling Cockpit service" "sudo systemctl enable --now cockpit.socket"
+run_cmd "Installing virtualization packages" "sudo apt install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager"
+run_cmd "Enabling libvirtd service" "sudo systemctl enable --now libvirtd"
+run_cmd "Installing Cockpit Machines plugin" "sudo apt install -y cockpit-machines"
+run_cmd "Adding user to libvirt,kvm groups" "sudo usermod -aG libvirt,kvm $USER"
 
-echo "✅ Installation complete!"
-echo "👉 Access Cockpit at: https://your-server-ip:9090"
-echo "⚠️ Please log out and log back in (or reboot) to apply user group changes."
+echo -e "${GREEN}"
+echo "==========================================="
+echo " ✅ Installation Complete! "
+echo "==========================================="
+echo -e "${RESET}"
+
+echo -e "${YELLOW}👉 Access Cockpit at: ${GREEN}https://your-server-ip:9090${RESET}"
+echo -e "${YELLOW}⚠️  Please log out and log back in (or reboot) to apply group changes.${RESET}"
