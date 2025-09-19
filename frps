@@ -1,5 +1,5 @@
 #!/bin/bash
-# One-Click FRP Tunnel Server Installer
+# One-Click FRP Tunnel Server Installer (Fixed)
 # Author: Rohit / Inkbyte Studios
 
 set -e
@@ -21,13 +21,12 @@ apt install -y wget tar curl sudo ufw
 mkdir -p $INSTALL_DIR
 cd /tmp
 
-# Download FRP
+# Download FRP server tarball directly from GitHub
 wget https://github.com/fatedier/frp/releases/download/v$FRP_VERSION/frp_${FRP_VERSION}_linux_amd64.tar.gz
 tar -xvzf frp_${FRP_VERSION}_linux_amd64.tar.gz
 cp frp_${FRP_VERSION}_linux_amd64/frps $INSTALL_DIR/
-cp frp_${FRP_VERSION}_linux_amd64/frps.ini $INSTALL_DIR/
 
-# Configure frps.ini
+# Create frps.ini
 cat > $INSTALL_DIR/frps.ini <<EOF
 [common]
 bind_port = $FRPS_PORT
@@ -37,7 +36,7 @@ dashboard_pwd = $DASHBOARD_PASS
 token = $TOKEN
 EOF
 
-# Set permissions
+# Set executable permissions
 chmod +x $INSTALL_DIR/frps
 
 # Create systemd service
@@ -55,17 +54,17 @@ User=root
 WantedBy=multi-user.target
 EOF
 
-# Reload systemd & start service
+# Reload systemd & start FRP server
 systemctl daemon-reload
 systemctl enable frps
 systemctl start frps
 
-# Firewall setup
+# Configure firewall
 ufw allow $FRPS_PORT/tcp
 ufw allow $DASHBOARD_PORT/tcp
 ufw reload
 
-# Clear & Finish
+# Clear terminal & show info
 clear
 echo "✅ FRP Tunnel Server installed successfully!"
 echo "FRPS running on port $FRPS_PORT"
