@@ -1,0 +1,74 @@
+#!/bin/bash
+# One-Click FRP Tunnel Server Installer
+# Author: Rohit / Inkbyte Studios
+
+set -e
+
+# Variables
+FRP_VERSION="0.61.1"
+INSTALL_DIR="/opt/frp"
+TOKEN="supersecret"
+FRPS_PORT=7000
+DASHBOARD_PORT=7500
+DASHBOARD_USER="admin"
+DASHBOARD_PASS="admin123"
+
+# Update & install dependencies
+apt update -y && apt upgrade -y
+apt install -y wget tar curl sudo ufw
+
+# Create installation directory
+mkdir -p $INSTALL_DIR
+cd /tmp
+
+# Download FRP
+wget https://github.com/fatedier/frp/releases/download/v$FRP_VERSION/frp_${FRP_VERSION}_linux_amd64.tar.gz
+tar -xvzf frp_${FRP_VERSION}_linux_amd64.tar.gz
+cp frp_${FRP_VERSION}_linux_amd64/frps $INSTALL_DIR/
+cp frp_${FRP_VERSION}_linux_amd64/frps.ini $INSTALL_DIR/
+
+# Configure frps.ini
+cat > $INSTALL_DIR/frps.ini <<EOF
+[common]
+bind_port = $FRPS_PORT
+dashboard_port = $DASHBOARD_PORT
+dashboard_user = $DASHBOARD_USER
+dashboard_pwd = $DASHBOARD_PASS
+token = $TOKEN
+EOF
+
+# Set permissions
+chmod +x $INSTALL_DIR/frps
+
+# Create systemd service
+cat > /etc/systemd/system/frps.service <<EOF
+[Unit]
+Description=FRP Server
+After=network.target
+
+[Service]
+ExecStart=$INSTALL_DIR/frps -c $INSTALL_DIR/frps.ini
+Restart=on-failure
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload systemd & start service
+systemctl daemon-reload
+systemctl enable frps
+systemctl start frps
+
+# Firewall setup
+ufw allow $FRPS_PORT/tcp
+ufw allow $DASHBOARD_PORT/tcp
+ufw reload
+
+# Clear & Finish
+clear
+echo "✅ FRP Tunnel Server installed successfully!"
+echo "FRPS running on port $FRPS_PORT"
+echo "Dashboard: http://YOUR_VPS_IP:$DASHBOARD_PORT"
+echo "Dashboard login: $DASHBOARD_USER / $DASHBOARD_PASS"
+echo "Client token: $TOKEN"
