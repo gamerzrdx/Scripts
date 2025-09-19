@@ -1,0 +1,25 @@
+#!/bin/bash
+# Cockpit + Virtualization Installer Script (Ubuntu/Debian)
+
+set -e
+
+echo "🚀 Updating system..."
+sudo apt update && sudo apt upgrade -y
+
+echo "📦 Installing Cockpit..."
+sudo apt install -y cockpit
+sudo systemctl enable --now cockpit.socket
+
+echo "📦 Installing Virtualization packages..."
+sudo apt install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager
+sudo systemctl enable --now libvirtd
+
+echo "📦 Adding Cockpit Virtual Machines plugin..."
+sudo apt install -y cockpit-machines
+
+echo "👤 Adding current user to virtualization groups..."
+sudo usermod -aG libvirt,kvm $USER
+
+echo "✅ Installation complete!"
+echo "👉 Access Cockpit at: https://your-server-ip:9090"
+echo "⚠️ Please log out and log back in (or reboot) to apply user group changes."
